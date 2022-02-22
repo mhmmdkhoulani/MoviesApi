@@ -8,6 +8,7 @@
         Task<Movie> AddMovieAsync(MovieDto movie);
         Task<bool> IsValidGenreId(int id);
         Task DeleteMovieAsync(int id);
+        Task<Movie> UpdateMovieAsync(MovieDto movie);
 
     }
 }

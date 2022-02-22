@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using MoviesApi.Data;
 
 namespace MoviesApi.Services
@@ -6,26 +7,21 @@ namespace MoviesApi.Services
     public class MoviesService : IMoviesService
     {
         private readonly ApplicationDbContext _db;
+        private readonly IMapper _mapper;
 
-
-        public MoviesService(ApplicationDbContext db)
+        public MoviesService(ApplicationDbContext db, IMapper mapper)
         {
             _db = db;
+            _mapper = mapper;
         }
 
         public async Task<Movie> AddMovieAsync(MovieDto dto)
         {
             var dataStream = new MemoryStream();
             await dto.Poster.CopyToAsync(dataStream);
-            var movie = new Movie
-            {
-                Title = dto.Title,
-                Year = dto.Year,
-                Poster = dataStream.ToArray(),
-                Rate = dto.Rate,
-                StoreLine = dto.StoreLine,
-                GenreId = dto.GenreId,
-            };
+
+            var movie = _mapper.Map<Movie>(dto);
+            movie.Poster = dataStream.ToArray();
 
             await _db.Movies.AddAsync(movie);
             await _db.SaveChangesAsync();
@@ -46,20 +42,11 @@ namespace MoviesApi.Services
             var movies = await _db.Movies
                 .OrderByDescending(m => m.Rate)
                 .Include(m => m.Genre)
-                .Select(m => new MovieDetailsDto
-                {
-                    Id = m.Id,
-                    Title = m.Title,
-                    GenreId = m.GenreId,
-                    GenreName = m.Genre.Name,
-                    Poster = m.Poster,
-                    Rate = m.Rate,
-                    StoreLine=m.StoreLine,
-                    Year = m.Year
-                })
                 .ToListAsync();
 
-            return movies;
+            var date = _mapper.Map<IEnumerable<MovieDetailsDto>>(movies);
+
+            return date;
         }
 
         public async Task<IEnumerable<MovieDetailsDto>> GetAllMoviesByGenreIdAsync(int id)
@@ -67,21 +54,10 @@ namespace MoviesApi.Services
             var movies = await _db.Movies
                 .OrderByDescending(m => m.Rate)
                 .Include(m => m.Genre)
-                .Select(m => new MovieDetailsDto
-                {
-                    Id = m.Id,
-                    Title = m.Title,
-                    GenreId = m.GenreId,
-                    GenreName = m.Genre.Name,
-                    Poster = m.Poster,
-                    Rate = m.Rate,
-                    StoreLine = m.StoreLine,
-                    Year = m.Year
-                })
                 .Where(m => m.GenreId == id)
                 .ToListAsync();
-
-            return movies;
+            var date = _mapper.Map<IEnumerable<MovieDetailsDto>>(movies);
+            return date;
         }
 
         public async Task<MovieDetailsDto> GetMovieByIdAsync(int id)
@@ -91,25 +67,42 @@ namespace MoviesApi.Services
             if (movie == null)
                 return null;
 
-            var movieDetailsDto = new MovieDetailsDto
-            {
-                Id = movie.Id,
-                Title = movie.Title,
-                GenreId = movie.GenreId,
-                GenreName = movie.Genre.Name,
-                Poster = movie.Poster,
-                Rate = movie.Rate,
-                StoreLine = movie.StoreLine,
-                Year = movie.Year
-            };
 
-            return movieDetailsDto;
+
+            var data = _mapper.Map<MovieDetailsDto>(movie);
+
+            return data;
         }
 
         public async Task<bool> IsValidGenreId(int id)
         {
             var result = await _db.Genres.AnyAsync(g => g.Id == id);
             return result;
+        }
+
+        public async Task<Movie> UpdateMovieAsync(MovieDto dto)
+        {
+            var movie = await _db.Movies.FindAsync(dto.Id);
+
+            if (movie == null)
+                return null;
+
+            if (dto.Poster != null)
+            {
+                var dataStream = new MemoryStream();
+                await dto.Poster.CopyToAsync(dataStream);
+                movie.Poster = dataStream.ToArray();
+            }
+
+            movie.Title = dto.Title;
+            movie.Year = dto.Year;
+            movie.Rate = dto.Rate;
+            movie.StoreLine = dto.StoreLine;
+            movie.GenreId = dto.GenreId;
+
+            await _db.SaveChangesAsync();
+            return movie;
+
         }
     }
 }

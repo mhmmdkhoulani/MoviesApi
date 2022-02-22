@@ -61,6 +61,35 @@ namespace MoviesApi.Controllers
             return Ok(movie);
         }
 
+        [HttpPut]
+        public async Task<IActionResult> UpdateMovieAsync([FromForm]MovieDto dto)
+        {
+            var movie = await _moviesService.GetMovieByIdAsync(dto.Id);
+            if (movie == null)
+            {
+                return BadRequest($"Movie with id {dto.Id} not found");
+            }
+
+            if (dto.Poster != null)
+            {
+                if (!_allowedExtenstions.Contains(Path.GetExtension(dto.Poster.FileName).ToLower()))
+                    return BadRequest("File does not suppprted");
+
+                if (dto.Poster.Length > _maxAllowedSize)
+                    return BadRequest("File is larger than max allowed size (1MB)");
+            }
+
+
+            var isValid = await _moviesService.IsValidGenreId(dto.GenreId);
+
+            if (!isValid)
+                return BadRequest("Invalid Genre Id");
+
+            var result = await _moviesService.UpdateMovieAsync(dto);
+            return Ok(result);
+        }
+
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
