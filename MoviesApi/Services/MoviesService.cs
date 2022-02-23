@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using MoviesApi.Data;
 using MoviesApi.Mappers;
 
@@ -8,12 +7,10 @@ namespace MoviesApi.Services
     public class MoviesService : IMoviesService
     {
         private readonly ApplicationDbContext _db;
-        private readonly IMapper _mapper;
 
-        public MoviesService(ApplicationDbContext db, IMapper mapper)
+        public MoviesService(ApplicationDbContext db)
         {
             _db = db;
-            _mapper = mapper;
         }
 
         public async Task<Movie> AddMovieAsync(MovieDto dto)
@@ -21,7 +18,8 @@ namespace MoviesApi.Services
             var dataStream = new MemoryStream();
             await dto.Poster.CopyToAsync(dataStream);
 
-            var movie = _mapper.Map<Movie>(dto);
+            var movie = dto.ToMovie();
+
             movie.Poster = dataStream.ToArray();
 
             await _db.Movies.AddAsync(movie);
@@ -40,23 +38,21 @@ namespace MoviesApi.Services
 
         public async Task<IEnumerable<MovieDetailsDto>> GetAllMoviesAsync()
         {
-            var movies = await _db.Movies
+            var movies = _db.Movies
                 .OrderByDescending(m => m.Rate)
-                .Include(m => m.Genre)
-                .ToListAsync();
-            
-            return movies.Select(m => m.ToMovieDetailsDto());
+                .Include(m => m.Genre);
+                
+            return await movies.Select(m => m.ToMovieDetailsDto()).ToListAsync();
         }
 
         public async Task<IEnumerable<MovieDetailsDto>> GetAllMoviesByGenreIdAsync(int id)
         {
-            var movies = await _db.Movies
+            var movies = _db.Movies
                 .OrderByDescending(m => m.Rate)
                 .Include(m => m.Genre)
-                .Where(m => m.GenreId == id)
-                .ToListAsync();
-            var date = _mapper.Map<IEnumerable<MovieDetailsDto>>(movies);
-            return date;
+                .Where(m => m.GenreId == id);
+
+            return await movies.Select(m => m.ToMovieDetailsDto()).ToListAsync();
         }
 
         public async Task<MovieDetailsDto> GetMovieByIdAsync(int id)
@@ -66,11 +62,7 @@ namespace MoviesApi.Services
             if (movie == null)
                 return null;
 
-
-
-            var data = _mapper.Map<MovieDetailsDto>(movie);
-
-            return data;
+            return movie.ToMovieDetailsDto();
         }
 
         public async Task<bool> IsValidGenreId(int id)

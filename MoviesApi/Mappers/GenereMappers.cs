@@ -2,9 +2,9 @@
 {
     public static class GenereMappers
     {
-        public static GenereDto ToGenereDto(this Genre genere)
+        public static GenreDto ToGenereDto(this Genre genere)
         {
-            return new GenereDto
+            return new GenreDto
             {
                 Id = genere.Id,
                 Name = genere.Name,

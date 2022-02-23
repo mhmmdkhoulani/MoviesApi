@@ -12,24 +12,31 @@ namespace MoviesApi.Mappers
         {
             return new MovieDetailsDto
             {
-                Genere = movie.Genre.ToGenereDto(),
+                Genre = movie.Genre.ToGenereDto(),
                 Id = movie.Id,
                 Rate = movie.Rate,
                 Title = movie.Title,
                 Year = movie.Year,
                 StoreLine = movie.StoreLine,
+                Poster = movie.Poster,
+                
             };
         }
 
-        public static MovieSummaryDto ToMovieSummaryDto(this Movie movie)
+        public static Movie ToMovie(this MovieDto movieDto)
         {
-            return new MovieSummaryDto
+            return new Movie
             {
-                Id = movie.Id,
-                Title = movie.Title,
-                Year = movie.Year,
+                Id = movieDto.Id,
+                Rate = movieDto.Rate,
+                Title = movieDto.Title,
+                Year = movieDto.Year,
+                StoreLine = movieDto.StoreLine,
+                GenreId = movieDto.GenreId,
             };
         }
+
+
 
     }
 }
