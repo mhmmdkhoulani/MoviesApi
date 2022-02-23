@@ -12,7 +12,21 @@
 
         public byte[] Poster { get; set; }
 
-        public int GenreId { get; set; }
-        public string GenreName { get; set; }
+        public GenereDto Genere { get; set; }
+    }
+
+    public class MovieSummaryDto
+    {
+        public int Id { get; set; }
+
+        public string Title { get; set; }
+
+        public int Year { get; set; }
+    }
+
+    public class GenereDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
 }
