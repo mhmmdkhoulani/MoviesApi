@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MoviesApi.Data;
+using MoviesApi.Mappers;
 
 namespace MoviesApi.Services
 {
@@ -43,10 +44,8 @@ namespace MoviesApi.Services
                 .OrderByDescending(m => m.Rate)
                 .Include(m => m.Genre)
                 .ToListAsync();
-
-            var date = _mapper.Map<IEnumerable<MovieDetailsDto>>(movies);
-
-            return date;
+            
+            return movies.Select(m => m.ToMovieDetailsDto());
         }
 
         public async Task<IEnumerable<MovieDetailsDto>> GetAllMoviesByGenreIdAsync(int id)
